@@ -10,12 +10,17 @@ public class LinkLabel: UILabel, NSLayoutManagerDelegate {
 	
 	public override init(frame: CGRect) {
 		super.init(frame: frame)
-		textContainer.layoutManager = layoutManager
-		userInteractionEnabled      = true
+		initialize()
 	}
 	
-	public required init(coder: NSCoder) {
-		fatalError("NSCoding not supported.")
+	public required init?(coder: NSCoder) {
+		super.init(coder: coder)
+		initialize()
+	}
+	
+	private func initialize() {
+		textContainer.layoutManager = layoutManager
+		userInteractionEnabled      = true
 	}
 	
 	// MARK: Content
