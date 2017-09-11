@@ -5,7 +5,7 @@
 import Foundation
 import UIKit
 
-public class LinkLabel: UILabel, NSLayoutManagerDelegate {
+open class LinkLabel: UILabel, NSLayoutManagerDelegate {
 	// MARK: Initializing
 	
 	public override init(frame: CGRect) {
@@ -18,44 +18,44 @@ public class LinkLabel: UILabel, NSLayoutManagerDelegate {
 		initialize()
 	}
 	
-	private func initialize() {
+	fileprivate func initialize() {
 		textContainer.layoutManager = layoutManager
-		userInteractionEnabled      = true
+		isUserInteractionEnabled      = true
 	}
 	
 	// MARK: Content
 	
-	public override var text: String! {
+	open override var text: String! {
 		didSet { updateLinks() }
 	}
 	
 	// MARK: Callbacks
 	
-	public func whenLinkIsTapped(callback: (matchString: String) -> Void) {
+	open func whenLinkIsTapped(_ callback: @escaping (_ matchString: String) -> Void) {
 		whenLinkIsTappedCallbacks.append(callback)
 	}
 	
-	private var whenLinkIsTappedCallbacks: [(matchString: String) -> Void] = []
+	fileprivate var whenLinkIsTappedCallbacks: [(_ matchString: String) -> Void] = []
 	
 	// MARK: Appearance
 	
-	public override var textColor: UIColor! {
+	open override var textColor: UIColor! {
 		didSet { highlightLinks() }
 	}
 	
-	public var highlightedLinkColor: UIColor?
+	open var highlightedLinkColor: UIColor?
 	
 	internal var effectiveHighlightedLinkColor: UIColor {
-		return highlightedLinkColor ?? tintColor.colorWithAlphaComponent(0.5)
+		return highlightedLinkColor ?? tintColor.withAlphaComponent(0.5)
 	}
 	
 	// MARK: Links
 	
-	public var linkDetectors = [LinkDetectorType]() {
+	open var linkDetectors = [LinkDetectorType]() {
 		didSet { updateLinks() }
 	}
 	
-	private var highlightedLink: Link? {
+	fileprivate var highlightedLink: Link? {
 		didSet {
 			if highlightedLink != oldValue {
 				highlightLinks()
@@ -63,9 +63,9 @@ public class LinkLabel: UILabel, NSLayoutManagerDelegate {
 		}
 	}
 	
-	private var links = [Link]()
+	fileprivate var links = [Link]()
 	
-	private func updateLinks() {
+	fileprivate func updateLinks() {
 		links = linkDetectors.flatMap { detector in
 			detector.detectLinks(string: self.text ?? "").map { range in
 				Link(range: range, callback: detector.callback)
@@ -75,14 +75,14 @@ public class LinkLabel: UILabel, NSLayoutManagerDelegate {
 		highlightLinks()
 	}
 	
-	private func highlightLinks() {
+	fileprivate func highlightLinks() {
 		let text             = self.text ?? ""
 		let attributedString = NSMutableAttributedString(string: text, attributes: baseAttributes)
 		
 		for link in links {
 			let range = NSRange(
-				location: text.startIndex.distanceTo(link.range.startIndex),
-				length:   link.range.startIndex.distanceTo(link.range.endIndex)
+				location: text.characters.distance(from: text.startIndex, to: link.range.lowerBound),
+				length:   text.characters.distance(from: link.range.lowerBound, to: link.range.upperBound)
 			)
 			
 			if range.location + range.length >= attributedString.length {
@@ -96,7 +96,7 @@ public class LinkLabel: UILabel, NSLayoutManagerDelegate {
 		textStorage.setAttributedString(attributedString)
 	}
 	
-	private var baseAttributes: [String:AnyObject] {
+	fileprivate var baseAttributes: [String:AnyObject] {
 		let mutableParagraphStyle       = NSMutableParagraphStyle()
 		mutableParagraphStyle.alignment = textAlignment
 		
@@ -104,12 +104,12 @@ public class LinkLabel: UILabel, NSLayoutManagerDelegate {
 			NSFontAttributeName:            font,
 			NSForegroundColorAttributeName: textColor,
 			NSParagraphStyleAttributeName:  mutableParagraphStyle
-		]
+		] as [String : Any]
 		
-		return attributes
+		return attributes as [String : AnyObject]
 	}
 	
-	private func highlightAttributes(highlighted highlighted: Bool) -> [String:AnyObject] {
+	fileprivate func highlightAttributes(highlighted: Bool) -> [String:AnyObject] {
 		var attributes                             = baseAttributes
 		attributes[NSForegroundColorAttributeName] = highlighted ? effectiveHighlightedLinkColor : tintColor
 		return attributes
@@ -117,88 +117,88 @@ public class LinkLabel: UILabel, NSLayoutManagerDelegate {
 	
 	// MARK: Text storage
 	
-	public lazy var textContainer: NSTextContainer = {
+	open lazy var textContainer: NSTextContainer = {
 		let _textContainer                  = NSTextContainer()
 		_textContainer.lineFragmentPadding  = 0.0
 		_textContainer.maximumNumberOfLines = self.numberOfLines
 		_textContainer.lineBreakMode        = self.lineBreakMode
-		_textContainer.size                 = CGSize(width: self.bounds.width, height: CGFloat.max)
+		_textContainer.size                 = CGSize(width: self.bounds.width, height: CGFloat.greatestFiniteMagnitude)
 		return _textContainer
 	}()
 	
-	public lazy var layoutManager: NSLayoutManager = {
+	open lazy var layoutManager: NSLayoutManager = {
 		let _layoutManager      = NSLayoutManager()
 		_layoutManager.delegate = self
 		_layoutManager.addTextContainer(self.textContainer)
 		return _layoutManager
 	}()
 	
-	public lazy var textStorage: NSTextStorage = {
+	open lazy var textStorage: NSTextStorage = {
 		let _textStorage = NSTextStorage()
 		_textStorage.addLayoutManager(self.layoutManager)
 		return _textStorage
 	}()
 	
-	private func updateTextContainerSize() {
-		textContainer.size = CGSize(width: bounds.width, height: CGFloat.max)
+	fileprivate func updateTextContainerSize() {
+		textContainer.size = CGSize(width: bounds.width, height: CGFloat.greatestFiniteMagnitude)
 	}
 	
 	// MARK: Events
 	
-	public override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
+	open override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
 		highlightedLink = getLink(touches: touches)
-		super.touchesBegan(touches, withEvent: event)
+		super.touchesBegan(touches, with: event)
 	}
 	
-	public override func touchesMoved(touches: Set<UITouch>, withEvent event: UIEvent?) {
+	open override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
 		highlightedLink = getLink(touches: touches)
-		super.touchesMoved(touches, withEvent: event)
+		super.touchesMoved(touches, with: event)
 	}
 	
-	public override func touchesEnded(touches: Set<UITouch>, withEvent event: UIEvent?) {
+	open override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
 		if let highlightedLink = highlightedLink {
-			let matchString = text.substringWithRange(highlightedLink.range)
+			let matchString = text.substring(with: highlightedLink.range)
 			
 			for callback in whenLinkIsTappedCallbacks {
-				callback(matchString: matchString)
+				callback(matchString)
 			}
 			
-			highlightedLink.callback?(matchString: matchString)
+			highlightedLink.callback?(matchString)
 		}
 		
 		highlightedLink = nil
 		
-		super.touchesEnded(touches, withEvent: event)
+		super.touchesEnded(touches, with: event)
 	}
 	
-	public override func touchesCancelled(touches: Set<UITouch>?, withEvent event: UIEvent?) {
+	open override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
 		highlightedLink = nil
-		super.touchesCancelled(touches, withEvent: event)
+		super.touchesCancelled(touches, with: event)
 	}
 	
-	private func getLink(touches touches: Set<UITouch>?) -> Link? {
+	fileprivate func getLink(touches: Set<UITouch>?) -> Link? {
 		if let touch = touches?.first {
-			return getLink(location: touch.locationInView(self))
+			return getLink(location: touch.location(in: self))
 		}
 		
 		return nil
 	}
 	
-	private func getLink(location location: CGPoint) -> Link? {
+	fileprivate func getLink(location: CGPoint) -> Link? {
 		var fractionOfDistance = CGFloat(0.0)
-		let characterIndex     = layoutManager.characterIndexForPoint(location, inTextContainer: textContainer, fractionOfDistanceBetweenInsertionPoints: &fractionOfDistance)
+		let characterIndex     = layoutManager.characterIndex(for: location, in: textContainer, fractionOfDistanceBetweenInsertionPoints: &fractionOfDistance)
 		
 		guard characterIndex <= textStorage.length else {
 			return nil
 		}
 		
 		for link in links {
-			let rangeLocation = text.startIndex.distanceTo(link.range.startIndex)
-			let rangeLength   = link.range.startIndex.distanceTo(link.range.endIndex)
+			let rangeLocation = text.distance(from: text.startIndex, to: link.range.lowerBound)
+			let rangeLength   = text.distance(from: link.range.lowerBound, to: link.range.upperBound)
 			
 			if rangeLocation <= characterIndex && (rangeLocation + rangeLength - 1) >= characterIndex {
-				let glyphRange   = layoutManager.glyphRangeForCharacterRange(NSMakeRange(rangeLocation, rangeLength), actualCharacterRange: nil)
-				let boundingRect = layoutManager.boundingRectForGlyphRange(glyphRange, inTextContainer: textContainer)
+				let glyphRange   = layoutManager.glyphRange(forCharacterRange: NSMakeRange(rangeLocation, rangeLength), actualCharacterRange: nil)
+				let boundingRect = layoutManager.boundingRect(forGlyphRange: glyphRange, in: textContainer)
 				
 				if boundingRect.contains(location) {
 					return link
@@ -211,27 +211,27 @@ public class LinkLabel: UILabel, NSLayoutManagerDelegate {
 	
 	// MARK: Layout
 	
-	public override var frame: CGRect {
+	open override var frame: CGRect {
 		didSet { updateTextContainerSize() }
 	}
 	
-	public override var bounds: CGRect {
+	open override var bounds: CGRect {
 		didSet { updateTextContainerSize() }
 	}
 	
-	public override var numberOfLines: Int {
+	open override var numberOfLines: Int {
 		didSet {
 			textContainer.maximumNumberOfLines = numberOfLines
 		}
 	}
 	
-	public override var lineBreakMode: NSLineBreakMode {
+	open override var lineBreakMode: NSLineBreakMode {
 		didSet {
 			textContainer.lineBreakMode = lineBreakMode
 		}
 	}
 	
-	public override func layoutSubviews() {
+	open override func layoutSubviews() {
 		super.layoutSubviews()
 		updateTextContainerSize()
 	}
@@ -239,7 +239,7 @@ public class LinkLabel: UILabel, NSLayoutManagerDelegate {
 
 private struct Link: Equatable {
 	var range:    Range<String.Index>
-	var callback: ((matchString: String) -> Void)?
+	var callback: ((_ matchString: String) -> Void)?
 }
 
 private func ==(link1: Link, link2: Link) -> Bool {
